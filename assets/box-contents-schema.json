@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Name or brief description of the item"
+      },
+      "categories": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of categories or types the item belongs to"
+      },
+      "description": {
+        "type": "string",
+        "description": "Detailed description of the item, possibly generated from image analysis"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Any additional notes or details about the item"
+      }
+    },
+    "required": ["name", "description"]
+  }
+}
