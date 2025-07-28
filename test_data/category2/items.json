@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Green Notebook",
+    "description": "Small pocket notebook with plain pages",
+    "categories": ["stationery", "notebooks"],
+    "notes": "Compact size for travel"
+  },
+  {
+    "name": "Red Marker",
+    "description": "Permanent red marker for labeling",
+    "categories": ["stationery", "markers"],
+    "notes": "Waterproof ink"
+  }
+]

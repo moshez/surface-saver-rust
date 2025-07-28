@@ -157,3 +157,197 @@ fn test_validate_nested_directories_ignored() {
     
     assert!(output.status.success());
 }
+
+// Search command tests
+
+fn create_search_test_structure() -> TempDir {
+    let temp_dir = TempDir::new().unwrap();
+    
+    // Create subdirectories
+    fs::create_dir(temp_dir.path().join("electronics")).unwrap();
+    fs::create_dir(temp_dir.path().join("stationery")).unwrap();
+    
+    // Electronics items
+    let electronics_json = r#"[
+        {
+            "name": "Red LED",
+            "description": "Small red light-emitting diode",
+            "categories": ["electronics", "components"],
+            "notes": "5mm diameter, 2V forward voltage"
+        },
+        {
+            "name": "Arduino Uno",
+            "description": "Microcontroller board based on ATmega328P",
+            "categories": ["electronics", "boards", "arduino"]
+        }
+    ]"#;
+    fs::write(temp_dir.path().join("electronics/items.json"), electronics_json).unwrap();
+    
+    // Stationery items
+    let stationery_json = r#"[
+        {
+            "name": "Blue Notebook",
+            "description": "Spiral-bound notebook with blue cover",
+            "categories": ["stationery", "notebooks"],
+            "notes": "100 pages, ruled"
+        },
+        {
+            "name": "Red Pen",
+            "description": "Ballpoint pen with red ink",
+            "categories": ["stationery", "pens"]
+        }
+    ]"#;
+    fs::write(temp_dir.path().join("stationery/items.json"), stationery_json).unwrap();
+    
+    temp_dir
+}
+
+#[test]
+fn test_search_basic() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "red"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 2 items"));
+    assert!(stdout.contains("Red LED"));
+    assert!(stdout.contains("Red Pen"));
+}
+
+#[test]
+fn test_search_multiple_keywords() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "red", "pen"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 1 items"));
+    assert!(stdout.contains("Red Pen"));
+    assert!(!stdout.contains("Red LED"));
+}
+
+#[test]
+fn test_search_by_name_field() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "--name", "notebook"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 1 items"));
+    assert!(stdout.contains("Blue Notebook"));
+}
+
+#[test]
+fn test_search_by_categories() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "--categories", "electronics"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 2 items"));
+    assert!(stdout.contains("Red LED"));
+    assert!(stdout.contains("Arduino Uno"));
+}
+
+#[test]
+fn test_search_no_results() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "nonexistent"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("No items found"));
+}
+
+#[test]
+fn test_search_case_insensitive() {
+    let temp_dir = create_search_test_structure();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "ARDUINO"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 1 items"));
+    assert!(stdout.contains("Arduino Uno"));
+}
+
+#[test]
+fn test_search_combined_field_flags() {
+    let temp_dir = create_search_test_structure();
+    
+    // Search for "red" in name field and "electronics" in all fields
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "--name", "red", "--all", "electronics"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Found 1 items"));
+    assert!(stdout.contains("Red LED"));
+}
+
+#[test]
+fn test_search_empty_directory() {
+    let temp_dir = TempDir::new().unwrap();
+    
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", temp_dir.path().to_str().unwrap(), "anything"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(output.status.success());
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("No items found"));
+}
+
+#[test]
+fn test_search_nonexistent_directory() {
+    let output = Command::new("cargo")
+        .args(&["run", "--", "search", "/nonexistent/directory", "test"])
+        .current_dir(".")
+        .output()
+        .expect("Failed to execute command");
+    
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Error searching:"));
+}
