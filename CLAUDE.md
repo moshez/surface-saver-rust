@@ -38,6 +38,22 @@ Run tests with: `cd src/surface-saver-rust && cargo test -- --test-threads=1` (u
 - Use existing dependencies (check Cargo.toml first)
 - Match the style of neighboring code
 
+### CRITICAL: Task Completion Requirements
+
+**A task is NOT complete until ALL of the following are done:**
+
+1. **Implementation** - The feature/fix is fully implemented
+2. **Unit Tests** - Comprehensive unit tests are written and passing
+3. **Integration Tests** - Integration tests verify the feature works end-to-end
+4. **Lint Clean** - The code must pass ALL of these checks:
+   ```bash
+   cd src/surface-saver-rust && cargo fmt --check
+   cd src/surface-saver-rust && cargo clippy -- -D warnings
+   cd src/surface-saver-rust && cargo check
+   ```
+
+If any of these requirements are not met, the task should remain marked as "in_progress" in the todo list.
+
 ### Linting and Type Checking
 
 Before completing any task, run:

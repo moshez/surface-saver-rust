@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Test Item 1",
+    "description": "This is a valid test item",
+    "categories": [
+      "test",
+      "example"
+    ],
+    "notes": null
+  },
+  {
+    "name": "Test Item 2",
+    "description": "Another valid item",
+    "categories": null,
+    "notes": "With optional notes field"
+  }
+]

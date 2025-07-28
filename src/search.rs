@@ -28,19 +28,27 @@ pub struct SearchOptions {
 
 impl SearchOptions {
     pub fn should_search_name(&self) -> bool {
-        self.search_name || (!self.search_name && !self.search_description && !self.search_categories && !self.search_notes) || self.search_all
+        self.search_name
+            || self.search_all
+            || (!self.search_description && !self.search_categories && !self.search_notes)
     }
 
     pub fn should_search_description(&self) -> bool {
-        self.search_description || (!self.search_name && !self.search_description && !self.search_categories && !self.search_notes) || self.search_all
+        self.search_description
+            || self.search_all
+            || (!self.search_name && !self.search_categories && !self.search_notes)
     }
 
     pub fn should_search_categories(&self) -> bool {
-        self.search_categories || (!self.search_name && !self.search_description && !self.search_categories && !self.search_notes) || self.search_all
+        self.search_categories
+            || self.search_all
+            || (!self.search_name && !self.search_description && !self.search_notes)
     }
 
     pub fn should_search_notes(&self) -> bool {
-        self.search_notes || (!self.search_name && !self.search_description && !self.search_categories && !self.search_notes) || self.search_all
+        self.search_notes
+            || self.search_all
+            || (!self.search_name && !self.search_description && !self.search_categories)
     }
 }
 
@@ -100,7 +108,9 @@ fn matches_keyword(item: &Item, keyword: &str, options: &SearchOptions) -> bool 
         return true;
     }
 
-    if options.should_search_description() && item.description.to_lowercase().contains(&keyword_lower) {
+    if options.should_search_description()
+        && item.description.to_lowercase().contains(&keyword_lower)
+    {
         return true;
     }
 
@@ -273,7 +283,7 @@ mod tests {
     fn test_search_directory() {
         let temp_dir = TempDir::new().unwrap();
         let json_path = temp_dir.path().join("items.json");
-        
+
         let items = vec![
             Item {
                 name: "Red Pen".to_string(),
@@ -299,10 +309,12 @@ mod tests {
             search_all: true,
         };
 
-        let results = search_directory(temp_dir.path(), &["stationery".to_string()], &options).unwrap();
+        let results =
+            search_directory(temp_dir.path(), &["stationery".to_string()], &options).unwrap();
         assert_eq!(results.len(), 2);
 
-        let results = search_directory(temp_dir.path(), &["notebook".to_string()], &options).unwrap();
+        let results =
+            search_directory(temp_dir.path(), &["notebook".to_string()], &options).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].item.name, "Blue Notebook");
 

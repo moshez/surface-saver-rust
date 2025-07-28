@@ -4,10 +4,11 @@ A command-line tool for validating and searching JSON inventory files following 
 
 ## Overview
 
-Surface Saver helps manage and search through inventory JSON files that describe items with names, descriptions, categories, and notes. It provides two main functions:
+Surface Saver helps manage and search through inventory JSON files that describe items with names, descriptions, categories, and notes. It provides three main functions:
 
 1. **Validate** - Check that JSON files conform to the required schema
 2. **Search** - Find items by keywords across multiple fields
+3. **Consolidate** - Merge all JSON files in each subdirectory into a single all.json file
 
 ## Installation
 
@@ -73,6 +74,39 @@ surface-saver-rust search ./data --name notebook --all red
 # Search in specific fields
 surface-saver-rust search ./data --categories electronics --description arduino
 ```
+
+### Consolidate Command
+
+Consolidate all JSON files in each subdirectory into a single `all.json` file:
+
+```bash
+surface-saver-rust consolidate <directory>
+```
+
+The consolidator will:
+- Scan all immediate subdirectories
+- For each subdirectory containing JSON files:
+  - Read all JSON files (except existing `all.json`)
+  - Merge all items into a single array
+  - Sort items alphabetically by name
+  - Write the result to `all.json` in that subdirectory
+- Report success/failure statistics
+
+#### Consolidate Example
+
+```bash
+surface-saver-rust consolidate ./data
+```
+
+Output:
+```
+Consolidation complete:
+  Successful directories: 3
+  Failed directories: 0
+  Total items consolidated: 15
+```
+
+After running, each subdirectory will have an `all.json` file containing all items from that directory's JSON files, sorted alphabetically.
 
 ## JSON Schema
 

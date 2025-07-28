@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Blue Pen",
+    "description": "Blue ballpoint pen with comfortable grip",
+    "categories": [
+      "stationery",
+      "writing"
+    ],
+    "notes": "Preferred pen for daily use"
+  },
+  {
+    "name": "Red Notebook",
+    "description": "A red spiral notebook with grid paper",
+    "categories": [
+      "stationery",
+      "notebooks"
+    ],
+    "notes": "Used for math calculations"
+  }
+]
