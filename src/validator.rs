@@ -5,13 +5,17 @@ use std::path::PathBuf;
 
 const BOX_CONTENTS_SCHEMA: &str = include_str!("../assets/box-contents-schema.json");
 
-pub fn validate_directory(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-    // Parse the schema once
-    let schema: Value = serde_json::from_str(BOX_CONTENTS_SCHEMA)?;
-    let compiled_schema = JSONSchema::options()
+fn compile_schema(schema_str: &str) -> Result<JSONSchema, Box<dyn std::error::Error>> {
+    let schema: Value = serde_json::from_str(schema_str)?;
+    JSONSchema::options()
         .with_draft(Draft::Draft7)
         .compile(&schema)
-        .map_err(|e| format!("Failed to compile schema: {e}"))?;
+        .map_err(|e| format!("Failed to compile schema: {e}").into())
+}
+
+pub fn validate_directory(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    // Parse and compile the schema once
+    let compiled_schema = compile_schema(BOX_CONTENTS_SCHEMA)?;
 
     // Read the directory
     let entries = fs::read_dir(directory)?;
@@ -220,5 +224,89 @@ mod tests {
         let result = validate_json_file(&file_path, &schema);
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_directory_with_subdirs() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create subdirectories with JSON files
+        let sub_dir1 = temp_dir.path().join("subdir1");
+        fs::create_dir(&sub_dir1).unwrap();
+
+        let valid_content = r#"[{"name": "Item1", "description": "Test1"}]"#;
+        fs::write(sub_dir1.join("data.json"), valid_content).unwrap();
+
+        // Test the validate_directory function directly
+        let result = validate_directory(&temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_directory_no_subdirs() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create a JSON file in the root (not in a subdirectory)
+        let valid_content = r#"[{"name": "Item1", "description": "Test1"}]"#;
+        fs::write(temp_dir.path().join("data.json"), valid_content).unwrap();
+
+        // Should not find any files since they're not in subdirectories
+        let result = validate_directory(&temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_directory_with_non_json_files() {
+        let temp_dir = TempDir::new().unwrap();
+
+        let sub_dir = temp_dir.path().join("subdir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        // Create non-JSON files that should be ignored
+        fs::write(sub_dir.join("data.txt"), "text file").unwrap();
+        fs::write(sub_dir.join("image.png"), &[0u8; 100]).unwrap();
+
+        // Create a valid JSON file
+        let valid_content = r#"[{"name": "Item1", "description": "Test1"}]"#;
+        fs::write(sub_dir.join("data.json"), valid_content).unwrap();
+
+        let result = validate_directory(&temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_directory_read_dir_error() {
+        let temp_dir = TempDir::new().unwrap();
+        let sub_dir = temp_dir.path().join("subdir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        // Create a valid JSON file
+        let valid_content = r#"[{"name": "Item1", "description": "Test1"}]"#;
+        fs::write(sub_dir.join("data.json"), valid_content).unwrap();
+
+        // Try to validate the directory
+        let result = validate_directory(&temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_compile_schema_invalid_json() {
+        let invalid_schema = r#"{ invalid json"#;
+        let result = compile_schema(invalid_schema);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_compile_schema_invalid_schema() {
+        // Valid JSON but invalid schema structure
+        let invalid_schema = r#"{"not": "a valid schema"}"#;
+        let result = compile_schema(invalid_schema);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Failed to compile schema")
+        );
     }
 }

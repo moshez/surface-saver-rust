@@ -294,4 +294,33 @@ mod tests {
         assert_eq!(consolidated[0].name, "Apple");
         assert_eq!(consolidated[1].name, "Zebra");
     }
+
+    #[test]
+    fn test_consolidate_write_error() {
+        let temp_dir = TempDir::new().unwrap();
+        let sub_dir = temp_dir.path().join("subdir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        let items = vec![Item {
+            name: "Test".to_string(),
+            description: "Test".to_string(),
+            categories: None,
+            notes: None,
+        }];
+
+        fs::write(
+            sub_dir.join("data.json"),
+            serde_json::to_string(&items).unwrap(),
+        )
+        .unwrap();
+
+        // Create all.json as a directory to cause write error
+        fs::create_dir(&sub_dir.join("all.json")).unwrap();
+
+        let result = consolidate_directory(temp_dir.path()).unwrap();
+
+        assert_eq!(result.successful_dirs, 0);
+        assert_eq!(result.failed_dirs, 1);
+        assert!(result.directories_processed[0].error.is_some());
+    }
 }

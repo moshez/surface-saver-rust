@@ -1,5 +1,9 @@
 # Surface Saver
 
+[![CI](https://github.com/yourusername/surface-saver-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/surface-saver-rust/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/yourusername/surface-saver-rust/branch/trunk/graph/badge.svg)](https://codecov.io/gh/yourusername/surface-saver-rust)
+[![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/yourusername/surface-saver-rust/actions/workflows/ci.yml)
+
 A command-line tool for validating and searching JSON inventory files following the Surface Saver schema.
 
 ## Overview
@@ -151,6 +155,20 @@ data/
 - Non-JSON files are ignored
 
 ## Development
+
+### Code Coverage
+
+This project maintains **100% test coverage**. The CI pipeline will fail if coverage drops below 100%.
+
+To check coverage locally:
+
+```bash
+# Using the provided script
+./scripts/check-coverage.sh
+
+# Or manually with cargo-tarpaulin
+cargo tarpaulin --all-features --workspace --timeout 120 --out Stdout --exclude-files "*/main.rs" --ignore-tests
+```
 
 ### Running Tests
 

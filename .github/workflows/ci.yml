@@ -112,7 +112,20 @@ jobs:
     
     - name: Generate code coverage
       run: |
-        cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+        # Generate coverage report and save to file
+        cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml --out Stdout --exclude-files "*/main.rs" --ignore-tests | tee coverage.txt
+        
+        # Extract coverage percentage
+        COVERAGE=$(grep "coverage" coverage.txt | grep -oP '\d+\.\d+(?=% coverage)' | tail -1)
+        echo "Code coverage: $COVERAGE%"
+        
+        # Check if coverage is 100%
+        if (( $(echo "$COVERAGE < 100" | bc -l) )); then
+          echo "❌ Coverage is below 100% ($COVERAGE%). Please add more tests!"
+          exit 1
+        else
+          echo "✅ Coverage is 100%!"
+        fi
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
