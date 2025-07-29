@@ -342,4 +342,22 @@ mod tests {
 
         assert!(!matches_keyword(&item, "anything", &options));
     }
+
+    #[test]
+    fn test_search_nonexistent_directory() {
+        let keywords = vec!["test".to_string()];
+        let options = SearchOptions {
+            search_name: false,
+            search_description: false,
+            search_categories: false,
+            search_notes: false,
+            search_all: true,
+        };
+        let result = search_directory(Path::new("/nonexistent/directory"), &keywords, &options);
+        
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+        assert!(err.to_string().contains("Directory not found"));
+    }
 }
