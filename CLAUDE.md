@@ -67,6 +67,23 @@ cd src/surface-saver-rust && cargo check
 
 The CI uses `--lib` flag for tarpaulin to measure unit test coverage only, avoiding potential inconsistencies with integration test coverage measurement.
 
+**Coverage Tracking Best Practices:**
+- Avoid multi-line format! macros as they can be counted differently by tarpaulin on different platforms
+- Refactor multi-line expressions by extracting them into variables:
+  ```rust
+  // Instead of:
+  output.push(format!(
+      "  Total items: {}",
+      result.total_items
+  ));
+  
+  // Use:
+  let total_items = result.total_items;
+  let total_msg = format!("  Total items: {total_items}");
+  output.push(total_msg);
+  ```
+- This ensures each statement is tracked as a distinct line for consistent coverage measurement across environments
+
 ### Important: Working Directory
 
 **Always run cargo commands from the project directory:**
