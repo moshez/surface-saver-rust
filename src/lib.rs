@@ -138,15 +138,19 @@ pub fn run_command(command: Commands) -> CommandResult {
             Ok(result) => {
                 let mut output = Vec::new();
                 output.push("Consolidation complete:".to_string());
-                output.push(format!(
-                    "  Successful directories: {}",
-                    result.successful_dirs
-                ));
-                output.push(format!("  Failed directories: {}", result.failed_dirs));
-                output.push(format!(
+
+                let successful_msg =
+                    format!("  Successful directories: {}", result.successful_dirs);
+                output.push(successful_msg);
+
+                let failed_msg = format!("  Failed directories: {}", result.failed_dirs);
+                output.push(failed_msg);
+
+                let total_msg = format!(
                     "  Total items consolidated: {}",
                     result.total_items_consolidated
-                ));
+                );
+                output.push(total_msg);
 
                 if result.failed_dirs > 0 {
                     output.push("".to_string());
