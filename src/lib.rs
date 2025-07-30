@@ -146,10 +146,8 @@ pub fn run_command(command: Commands) -> CommandResult {
                 let failed_msg = format!("  Failed directories: {}", result.failed_dirs);
                 output.push(failed_msg);
 
-                let total_msg = format!(
-                    "  Total items consolidated: {}",
-                    result.total_items_consolidated
-                );
+                let total_items = result.total_items_consolidated;
+                let total_msg = format!("  Total items consolidated: {}", total_items);
                 output.push(total_msg);
 
                 if result.failed_dirs > 0 {
