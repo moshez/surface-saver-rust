@@ -113,7 +113,7 @@ jobs:
     - name: Generate code coverage
       run: |
         # Generate coverage report and save to file
-        cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml --out Stdout --exclude-files "*/main.rs" --ignore-tests | tee coverage.txt
+        cargo tarpaulin --verbose --all-features --lib --timeout 120 --out Xml --out Stdout --exclude-files "*/main.rs" --ignore-tests | tee coverage.txt
         
         # Extract coverage percentage
         COVERAGE=$(grep "coverage" coverage.txt | grep -oP '\d+\.\d+(?=% coverage)' | tail -1)

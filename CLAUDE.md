@@ -63,6 +63,10 @@ cd src/surface-saver-rust && cargo clippy
 cd src/surface-saver-rust && cargo check
 ```
 
+### CI Coverage Configuration
+
+The CI uses `--lib` flag for tarpaulin to measure unit test coverage only, avoiding potential inconsistencies with integration test coverage measurement.
+
 ### Important: Working Directory
 
 **Always run cargo commands from the project directory:**
