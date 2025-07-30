@@ -13,7 +13,7 @@ fn compile_schema(schema_str: &str) -> Result<JSONSchema, Box<dyn std::error::Er
         .map_err(|e| format!("Failed to compile schema: {e}").into())
 }
 
-pub fn validate_directory(directory: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+pub fn validate_directory(directory: &PathBuf) -> Result<bool, Box<dyn std::error::Error>> {
     // Parse and compile the schema once
     let compiled_schema = compile_schema(BOX_CONTENTS_SCHEMA)?;
 
@@ -53,11 +53,7 @@ pub fn validate_directory(directory: &PathBuf) -> Result<(), Box<dyn std::error:
         }
     }
 
-    if validation_errors {
-        std::process::exit(1);
-    }
-
-    Ok(())
+    Ok(validation_errors)
 }
 
 pub fn validate_json_file(file_path: &PathBuf, schema: &JSONSchema) -> Result<(), String> {
@@ -237,9 +233,26 @@ mod tests {
         let valid_content = r#"[{"name": "Item1", "description": "Test1"}]"#;
         fs::write(sub_dir1.join("data.json"), valid_content).unwrap();
 
-        // Test the validate_directory function directly
         let result = validate_directory(&temp_dir.path().to_path_buf());
         assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false); // No validation errors
+    }
+
+    #[test]
+    fn test_validate_directory_with_invalid_json() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create subdirectory with invalid JSON file
+        let sub_dir = temp_dir.path().join("subdir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        // Missing required "description" field
+        let invalid_content = r#"[{"name": "Item without description"}]"#;
+        fs::write(sub_dir.join("invalid.json"), invalid_content).unwrap();
+
+        let result = validate_directory(&temp_dir.path().to_path_buf());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true); // Has validation errors
     }
 
     #[test]
@@ -253,6 +266,7 @@ mod tests {
         // Should not find any files since they're not in subdirectories
         let result = validate_directory(&temp_dir.path().to_path_buf());
         assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false); // No validation errors (no files found)
     }
 
     #[test]
@@ -272,6 +286,7 @@ mod tests {
 
         let result = validate_directory(&temp_dir.path().to_path_buf());
         assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false); // No validation errors
     }
 
     #[test]
@@ -287,6 +302,7 @@ mod tests {
         // Try to validate the directory
         let result = validate_directory(&temp_dir.path().to_path_buf());
         assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false); // No validation errors
     }
 
     #[test]

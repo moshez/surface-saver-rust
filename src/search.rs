@@ -354,7 +354,7 @@ mod tests {
             search_all: true,
         };
         let result = search_directory(Path::new("/nonexistent/directory"), &keywords, &options);
-        
+
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);

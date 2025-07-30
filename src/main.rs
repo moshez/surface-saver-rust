@@ -61,16 +61,37 @@ enum Commands {
     },
 }
 
-fn main() {
-    let cli = Cli::parse();
+#[derive(Debug)]
+struct CommandResult {
+    stdout: Vec<String>,
+    stderr: Vec<String>,
+    exit_code: i32,
+}
 
-    match cli.command {
-        Commands::Validate { directory } => {
-            if let Err(e) = validate_directory(&directory) {
-                eprintln!("Error: {e}");
-                std::process::exit(1);
+fn run_command(command: Commands) -> CommandResult {
+    match command {
+        Commands::Validate { directory } => match validate_directory(&directory) {
+            Ok(has_errors) => {
+                if has_errors {
+                    CommandResult {
+                        stdout: vec![],
+                        stderr: vec![],
+                        exit_code: 1,
+                    }
+                } else {
+                    CommandResult {
+                        stdout: vec![],
+                        stderr: vec![],
+                        exit_code: 0,
+                    }
+                }
             }
-        }
+            Err(e) => CommandResult {
+                stdout: vec![],
+                stderr: vec![format!("Error: {e}")],
+                exit_code: 1,
+            },
+        },
         Commands::Search {
             directory,
             keywords,
@@ -90,54 +111,94 @@ fn main() {
 
             match search_directory(&directory, &keywords, &options) {
                 Ok(results) => {
+                    let mut output = Vec::new();
                     if results.is_empty() {
-                        println!("No items found matching all keywords.");
+                        output.push("No items found matching all keywords.".to_string());
                     } else {
-                        println!("Found {} items:", results.len());
+                        output.push(format!("Found {} items:", results.len()));
                         for result in results {
-                            println!("\n---");
-                            println!("Name: {}", result.item.name);
-                            println!("Description: {}", result.item.description);
+                            output.push("\n---".to_string());
+                            output.push(format!("Name: {}", result.item.name));
+                            output.push(format!("Description: {}", result.item.description));
                             if let Some(cats) = &result.item.categories {
-                                println!("Categories: {}", cats.join(", "));
+                                output.push(format!("Categories: {}", cats.join(", ")));
                             }
                             if let Some(notes) = &result.item.notes {
-                                println!("Notes: {notes}");
+                                output.push(format!("Notes: {notes}"));
                             }
-                            println!("File: {}", result.file_path.display());
+                            output.push(format!("File: {}", result.file_path.display()));
                         }
                     }
+                    CommandResult {
+                        stdout: output,
+                        stderr: vec![],
+                        exit_code: 0,
+                    }
                 }
-                Err(e) => {
-                    eprintln!("Error searching: {e}");
-                    std::process::exit(1);
-                }
+                Err(e) => CommandResult {
+                    stdout: vec![],
+                    stderr: vec![format!("Error searching: {e}")],
+                    exit_code: 1,
+                },
             }
         }
         Commands::Consolidate { directory } => match consolidate_directory(&directory) {
             Ok(result) => {
-                println!("Consolidation complete:");
-                println!("  Successful directories: {}", result.successful_dirs);
-                println!("  Failed directories: {}", result.failed_dirs);
-                println!(
+                let mut output = Vec::new();
+                output.push("Consolidation complete:".to_string());
+                output.push(format!(
+                    "  Successful directories: {}",
+                    result.successful_dirs
+                ));
+                output.push(format!("  Failed directories: {}", result.failed_dirs));
+                output.push(format!(
                     "  Total items consolidated: {}",
                     result.total_items_consolidated
-                );
+                ));
 
                 if result.failed_dirs > 0 {
-                    println!("\nErrors:");
+                    output.push("\nErrors:".to_string());
                     for dir_result in &result.directories_processed {
                         if let Some(error) = &dir_result.error {
-                            println!("  {}: {}", dir_result.path.display(), error);
+                            output.push(format!("  {}: {}", dir_result.path.display(), error));
                         }
                     }
-                    std::process::exit(1);
+                    CommandResult {
+                        stdout: output,
+                        stderr: vec![],
+                        exit_code: 1,
+                    }
+                } else {
+                    CommandResult {
+                        stdout: output,
+                        stderr: vec![],
+                        exit_code: 0,
+                    }
                 }
             }
-            Err(e) => {
-                eprintln!("Error: {e}");
-                std::process::exit(1);
-            }
+            Err(e) => CommandResult {
+                stdout: vec![],
+                stderr: vec![format!("Error: {e}")],
+                exit_code: 1,
+            },
         },
+    }
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    let result = run_command(cli.command);
+
+    for line in result.stdout {
+        println!("{line}");
+    }
+
+    for line in result.stderr {
+        eprintln!("{line}");
+    }
+
+    if result.exit_code != 0 {
+        std::process::exit(result.exit_code);
     }
 }
