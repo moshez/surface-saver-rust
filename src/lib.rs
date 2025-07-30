@@ -149,7 +149,8 @@ pub fn run_command(command: Commands) -> CommandResult {
                 ));
 
                 if result.failed_dirs > 0 {
-                    output.push("\nErrors:".to_string());
+                    output.push("".to_string());
+                    output.push("Errors:".to_string());
                     for dir_result in &result.directories_processed {
                         if let Some(error) = &dir_result.error {
                             output.push(format!("  {}: {}", dir_result.path.display(), error));
@@ -351,9 +352,9 @@ mod tests {
         assert_eq!(result.exit_code, 0);
         assert!(!result.stdout.is_empty());
         assert_eq!(result.stdout[0], "Consolidation complete:");
-        assert!(result.stdout[1].contains("Successful directories: 1"));
-        assert!(result.stdout[2].contains("Failed directories: 0"));
-        assert!(result.stdout[3].contains("Total items consolidated: 1"));
+        assert_eq!(result.stdout[1], "  Successful directories: 1");
+        assert_eq!(result.stdout[2], "  Failed directories: 0");
+        assert_eq!(result.stdout[3], "  Total items consolidated: 1");
         assert!(result.stderr.is_empty());
     }
 
@@ -373,9 +374,11 @@ mod tests {
         assert_eq!(result.exit_code, 1);
         assert!(!result.stdout.is_empty());
         assert_eq!(result.stdout[0], "Consolidation complete:");
-        assert!(result.stdout[1].contains("Successful directories: 0"));
-        assert!(result.stdout[2].contains("Failed directories: 1"));
-        assert!(result.stdout[4].contains("\nErrors:"));
+        assert_eq!(result.stdout[1], "  Successful directories: 0");
+        assert_eq!(result.stdout[2], "  Failed directories: 1");
+        assert_eq!(result.stdout[3], "  Total items consolidated: 0");
+        assert_eq!(result.stdout[4], "");
+        assert_eq!(result.stdout[5], "Errors:");
         assert!(result.stderr.is_empty());
     }
 
@@ -389,5 +392,47 @@ mod tests {
         assert!(result.stdout.is_empty());
         assert_eq!(result.stderr.len(), 1);
         assert!(result.stderr[0].contains("Error:"));
+    }
+
+    #[test]
+    fn test_run_command_consolidate_mixed_results() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create two subdirectories
+        let sub_dir1 = temp_dir.path().join("subdir1");
+        let sub_dir2 = temp_dir.path().join("subdir2");
+        fs::create_dir(&sub_dir1).unwrap();
+        fs::create_dir(&sub_dir2).unwrap();
+
+        // Valid JSON in first directory
+        let items = vec![serde_json::json!({
+            "name": "Item1",
+            "description": "Description1",
+        })];
+        fs::write(
+            sub_dir1.join("data.json"),
+            serde_json::to_string(&items).unwrap(),
+        )
+        .unwrap();
+
+        // Invalid JSON in second directory
+        fs::write(sub_dir2.join("invalid.json"), "not valid json").unwrap();
+
+        let result = run_command(Commands::Consolidate {
+            directory: temp_dir.path().to_path_buf(),
+        });
+
+        assert_eq!(result.exit_code, 1);
+        assert!(!result.stdout.is_empty());
+
+        // Verify the exact output format to ensure coverage of format! macros
+        assert_eq!(result.stdout[0], "Consolidation complete:");
+        assert_eq!(result.stdout[1], "  Successful directories: 1");
+        assert_eq!(result.stdout[2], "  Failed directories: 1");
+        assert_eq!(result.stdout[3], "  Total items consolidated: 1");
+        assert_eq!(result.stdout[4], "");
+        assert_eq!(result.stdout[5], "Errors:");
+
+        assert!(result.stderr.is_empty());
     }
 }
