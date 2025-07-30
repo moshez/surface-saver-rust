@@ -126,13 +126,6 @@ jobs:
         else
           echo "✅ Coverage is 100%!"
         fi
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./cobertura.xml
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
 
   security_audit:
     name: Security Audit
