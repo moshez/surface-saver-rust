@@ -9,10 +9,11 @@ struct Cli {
     command: Commands,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
-    let result = run_command(cli.command);
+    let result = run_command(cli.command).await;
 
     for line in result.stdout {
         println!("{line}");

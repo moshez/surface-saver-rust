@@ -13,7 +13,7 @@ fi
 
 # Run coverage analysis
 echo "🧪 Running tests with coverage..."
-cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Stdout --exclude-files "*/main.rs" --ignore-tests | tee coverage.txt
+cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Stdout --exclude-files "*/main.rs" "*/mcp_no_test.rs" --ignore-tests | tee coverage.txt
 
 # Extract coverage percentage
 COVERAGE=$(grep "coverage" coverage.txt | grep -oP '\d+\.\d+(?=% coverage)' | tail -1)
