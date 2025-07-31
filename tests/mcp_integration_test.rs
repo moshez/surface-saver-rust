@@ -1,7 +1,7 @@
 use surface_saver_rust::{Commands, run_command};
 use tempfile::TempDir;
 use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 
 #[tokio::test]
 async fn test_mcp_server_with_files() {
@@ -9,7 +9,6 @@ async fn test_mcp_server_with_files() {
 
     // Create temporary files for input/output
     let input_path = temp_dir.path().join("input.txt");
-    let output_path = temp_dir.path().join("output.txt");
 
     // Write empty input (immediate EOF)
     let mut input_file = File::create(&input_path).await.unwrap();

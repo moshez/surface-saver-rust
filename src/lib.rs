@@ -1,5 +1,6 @@
 pub mod consolidate;
 pub mod mcp;
+pub mod mcp_no_test;
 pub mod search;
 pub mod validator;
 

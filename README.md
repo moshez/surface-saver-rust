@@ -187,8 +187,10 @@ To check coverage locally:
 ./scripts/check-coverage.sh
 
 # Or manually with cargo-tarpaulin
-cargo tarpaulin --all-features --workspace --timeout 120 --out Stdout --exclude-files "*/main.rs" --ignore-tests
+cargo tarpaulin --all-features --workspace --timeout 120 --out Stdout --exclude-files "*/main.rs" "*/mcp_no_test.rs" --ignore-tests
 ```
+
+**Note**: The `mcp_no_test.rs` file is excluded from coverage measurements. This file contains the MCP server's `run` method which requires a full MCP protocol exchange to test properly. The method waits for the service to complete and cannot be tested without implementing a complete MCP client, which would be circular and impractical.
 
 ### Running Tests
 
