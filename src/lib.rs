@@ -1,4 +1,5 @@
 pub mod consolidate;
+pub mod mcp;
 pub mod search;
 pub mod validator;
 
@@ -6,6 +7,7 @@ use clap::Subcommand;
 use std::path::PathBuf;
 
 use consolidate::consolidate_directory;
+use mcp::McpServer;
 use search::{SearchOptions, search_directory};
 use validator::validate_directory;
 
@@ -51,6 +53,12 @@ pub enum Commands {
         #[arg(value_name = "DIR")]
         directory: PathBuf,
     },
+    /// Start an MCP server for searching inventory
+    Mcp {
+        /// The directory to search in
+        #[arg(value_name = "DIR")]
+        directory: PathBuf,
+    },
 }
 
 #[derive(Debug)]
@@ -60,7 +68,7 @@ pub struct CommandResult {
     pub exit_code: i32,
 }
 
-pub fn run_command(command: Commands) -> CommandResult {
+pub async fn run_command(command: Commands) -> CommandResult {
     match command {
         Commands::Validate { directory } => match validate_directory(&directory) {
             Ok(has_errors) => {
@@ -177,6 +185,16 @@ pub fn run_command(command: Commands) -> CommandResult {
                 exit_code: 1,
             },
         },
+        Commands::Mcp { directory } => {
+            let server = McpServer::new(directory);
+            // MCP server always returns an error (not implemented yet)
+            let result = server.run().await;
+            CommandResult {
+                stdout: vec![],
+                stderr: vec![format!("Error running MCP server: {}", result.unwrap_err())],
+                exit_code: 1,
+            }
+        }
     }
 }
 
@@ -186,8 +204,8 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
-    #[test]
-    fn test_run_command_validate_no_errors() {
+    #[tokio::test]
+    async fn test_run_command_validate_no_errors() {
         let temp_dir = TempDir::new().unwrap();
         let sub_dir = temp_dir.path().join("subdir");
         fs::create_dir(&sub_dir).unwrap();
@@ -197,15 +215,16 @@ mod tests {
 
         let result = run_command(Commands::Validate {
             directory: temp_dir.path().to_path_buf(),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 0);
         assert!(result.stdout.is_empty());
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_validate_with_errors() {
+    #[tokio::test]
+    async fn test_run_command_validate_with_errors() {
         let temp_dir = TempDir::new().unwrap();
         let sub_dir = temp_dir.path().join("subdir");
         fs::create_dir(&sub_dir).unwrap();
@@ -216,18 +235,20 @@ mod tests {
 
         let result = run_command(Commands::Validate {
             directory: temp_dir.path().to_path_buf(),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_validate_error() {
+    #[tokio::test]
+    async fn test_run_command_validate_error() {
         let result = run_command(Commands::Validate {
             directory: PathBuf::from("/nonexistent/directory"),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
@@ -235,8 +256,8 @@ mod tests {
         assert!(result.stderr[0].contains("Error:"));
     }
 
-    #[test]
-    fn test_run_command_search_found() {
+    #[tokio::test]
+    async fn test_run_command_search_found() {
         let temp_dir = TempDir::new().unwrap();
         let json_path = temp_dir.path().join("items.json");
 
@@ -264,7 +285,8 @@ mod tests {
             categories: false,
             notes: false,
             all: true,
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 0);
         assert!(!result.stdout.is_empty());
@@ -284,8 +306,8 @@ mod tests {
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_search_not_found() {
+    #[tokio::test]
+    async fn test_run_command_search_not_found() {
         let temp_dir = TempDir::new().unwrap();
         let json_path = temp_dir.path().join("items.json");
 
@@ -304,7 +326,8 @@ mod tests {
             categories: false,
             notes: false,
             all: true,
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 0);
         assert_eq!(result.stdout.len(), 1);
@@ -312,8 +335,8 @@ mod tests {
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_search_error() {
+    #[tokio::test]
+    async fn test_run_command_search_error() {
         let result = run_command(Commands::Search {
             directory: PathBuf::from("/nonexistent/directory"),
             keywords: vec!["test".to_string()],
@@ -322,7 +345,8 @@ mod tests {
             categories: false,
             notes: false,
             all: true,
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
@@ -330,8 +354,8 @@ mod tests {
         assert!(result.stderr[0].contains("Error searching:"));
     }
 
-    #[test]
-    fn test_run_command_consolidate_success() {
+    #[tokio::test]
+    async fn test_run_command_consolidate_success() {
         let temp_dir = TempDir::new().unwrap();
         let sub_dir = temp_dir.path().join("subdir");
         fs::create_dir(&sub_dir).unwrap();
@@ -349,7 +373,8 @@ mod tests {
 
         let result = run_command(Commands::Consolidate {
             directory: temp_dir.path().to_path_buf(),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 0);
         assert!(!result.stdout.is_empty());
@@ -360,8 +385,8 @@ mod tests {
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_consolidate_with_failures() {
+    #[tokio::test]
+    async fn test_run_command_consolidate_with_failures() {
         let temp_dir = TempDir::new().unwrap();
         let sub_dir = temp_dir.path().join("subdir");
         fs::create_dir(&sub_dir).unwrap();
@@ -371,7 +396,8 @@ mod tests {
 
         let result = run_command(Commands::Consolidate {
             directory: temp_dir.path().to_path_buf(),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(!result.stdout.is_empty());
@@ -384,11 +410,12 @@ mod tests {
         assert!(result.stderr.is_empty());
     }
 
-    #[test]
-    fn test_run_command_consolidate_error() {
+    #[tokio::test]
+    async fn test_run_command_consolidate_error() {
         let result = run_command(Commands::Consolidate {
             directory: PathBuf::from("/nonexistent/directory"),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
@@ -396,8 +423,8 @@ mod tests {
         assert!(result.stderr[0].contains("Error:"));
     }
 
-    #[test]
-    fn test_run_command_consolidate_mixed_results() {
+    #[tokio::test]
+    async fn test_run_command_consolidate_mixed_results() {
         let temp_dir = TempDir::new().unwrap();
 
         // Create two subdirectories
@@ -422,7 +449,8 @@ mod tests {
 
         let result = run_command(Commands::Consolidate {
             directory: temp_dir.path().to_path_buf(),
-        });
+        })
+        .await;
 
         assert_eq!(result.exit_code, 1);
         assert!(!result.stdout.is_empty());
@@ -436,5 +464,19 @@ mod tests {
         assert_eq!(result.stdout[5], "Errors:");
 
         assert!(result.stderr.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_run_command_mcp_error() {
+        // Test that MCP server returns error when directory doesn't exist
+        let result = run_command(Commands::Mcp {
+            directory: PathBuf::from("/nonexistent/directory"),
+        })
+        .await;
+
+        assert_eq!(result.exit_code, 1);
+        assert!(result.stdout.is_empty());
+        assert_eq!(result.stderr.len(), 1);
+        assert!(result.stderr[0].contains("Error running MCP server:"));
     }
 }
