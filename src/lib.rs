@@ -193,7 +193,9 @@ pub async fn run_command(command: Commands) -> CommandResult {
     }
 }
 
-pub fn format_mcp_result(result: Result<(), Box<dyn std::error::Error + Send + Sync>>) -> CommandResult {
+pub fn format_mcp_result(
+    result: Result<(), Box<dyn std::error::Error + Send + Sync>>,
+) -> CommandResult {
     match result {
         Ok(_) => CommandResult {
             stdout: vec!["MCP server exited successfully".to_string()],
@@ -213,7 +215,7 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::TempDir;
-    
+
     async fn run_command(cmd: Commands) -> CommandResult {
         super::run_command(cmd).await
     }
@@ -515,28 +517,27 @@ mod tests {
     #[test]
     fn test_format_mcp_result_success() {
         use super::format_mcp_result;
-        
+
         // Test success path
         let result = format_mcp_result(Ok(()));
-        
+
         assert_eq!(result.exit_code, 0);
         assert_eq!(result.stdout.len(), 1);
         assert_eq!(result.stdout[0], "MCP server exited successfully");
         assert!(result.stderr.is_empty());
     }
-    
+
     #[test]
     fn test_format_mcp_result_error() {
         use super::format_mcp_result;
-        
+
         // Test error path
         let error: Box<dyn std::error::Error + Send + Sync> = "Test error".into();
         let result = format_mcp_result(Err(error));
-        
+
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
         assert_eq!(result.stderr.len(), 1);
         assert!(result.stderr[0].contains("Error running MCP server: Test error"));
     }
-
 }
