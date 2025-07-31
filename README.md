@@ -118,17 +118,15 @@ Consolidation complete:
 
 After running, each subdirectory will have an `all.json` file containing all items from that directory's JSON files, sorted alphabetically.
 
-### MCP Server (Experimental)
+### MCP Server
 
-Surface Saver includes experimental support for the Model Context Protocol (MCP), allowing AI assistants to search your inventory.
+Surface Saver includes support for the Model Context Protocol (MCP), allowing AI assistants to search your inventory.
 
 ```bash
 surface-saver-rust mcp <directory>
 ```
 
-**Note:** The MCP feature is currently not implemented as the rmcp API is still evolving. This command will display an error message indicating the feature is not yet available.
-
-When implemented, the MCP server will:
+The MCP server:
 - Start a server that AI assistants can connect to via stdio
 - Expose a single `search` tool that allows searching the specified directory
 - Provide the same search capabilities as the command-line search command

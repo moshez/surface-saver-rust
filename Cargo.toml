@@ -9,9 +9,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jsonschema = "0.18"
 walkdir = "2.5"
-# TODO: Re-enable when rmcp API stabilizes
-# rmcp = { version = "0.3.1", features = ["server", "transport-io"] }
-# rmcp-macros = { version = "0.3.1" }
+rmcp = { version = "0.1.5", features = ["server", "transport-io"] }
+schemars = "0.8"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio = { version = "1", features = ["full"] }
 
 [dev-dependencies]

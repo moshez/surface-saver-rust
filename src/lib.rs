@@ -187,12 +187,17 @@ pub async fn run_command(command: Commands) -> CommandResult {
         },
         Commands::Mcp { directory } => {
             let server = McpServer::new(directory);
-            // MCP server always returns an error (not implemented yet)
-            let result = server.run().await;
-            CommandResult {
-                stdout: vec![],
-                stderr: vec![format!("Error running MCP server: {}", result.unwrap_err())],
-                exit_code: 1,
+            match server.run().await {
+                Ok(_) => CommandResult {
+                    stdout: vec!["MCP server exited successfully".to_string()],
+                    stderr: vec![],
+                    exit_code: 0,
+                },
+                Err(e) => CommandResult {
+                    stdout: vec![],
+                    stderr: vec![format!("Error running MCP server: {}", e)],
+                    exit_code: 1,
+                },
             }
         }
     }
@@ -474,6 +479,24 @@ mod tests {
         })
         .await;
 
+        assert_eq!(result.exit_code, 1);
+        assert!(result.stdout.is_empty());
+        assert_eq!(result.stderr.len(), 1);
+        assert!(result.stderr[0].contains("Error running MCP server:"));
+    }
+
+    #[tokio::test]
+    async fn test_run_command_mcp_with_valid_directory() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // The MCP server should still return an error as it needs stdin/stdout to function
+        // but we're testing the command handling
+        let result = run_command(Commands::Mcp {
+            directory: temp_dir.path().to_path_buf(),
+        })
+        .await;
+
+        // In test environment, the server can't run properly without actual stdio
         assert_eq!(result.exit_code, 1);
         assert!(result.stdout.is_empty());
         assert_eq!(result.stderr.len(), 1);
