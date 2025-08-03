@@ -41,7 +41,7 @@ impl McpServer {
 
 #[tool(tool_box)]
 impl McpServer {
-    #[tool(description = "Search for items in the inventory by keywords")]
+    #[tool(description = "Search for items in the inventory by keywords. Surface Saver helps catalog the inevitable accumulation of items on horizontal surfaces (desks, counters, shelves) into searchable JSON inventories. You can search by keywords across all fields or target specific fields like name, description, categories, or notes. Multiple keywords use AND logic - all must match. Examples: search for 'notebook' to find all notebooks, use name=true to search only item names, or combine keywords like 'arduino sensor' to find items matching both terms.")]
     async fn search(&self, #[tool(aggr)] request: SearchRequest) -> String {
         tracing::info!("Search request: {:?}", request);
 
@@ -87,8 +87,13 @@ impl ServerHandler for McpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             instructions: Some(
-                "Surface Saver helps search through inventory JSON files. \
-                 Use the search tool to find items by keywords across multiple fields."
+                "Surface Saver helps you find items in your physical space inventories. \
+                 It searches through JSON files that catalog items on horizontal surfaces like desks, counters, and shelves. \
+                 Each item has a name, description, and optional categories and notes. \
+                 When searching, you can use multiple keywords (all must match) and optionally target specific fields. \
+                 For example: search for 'red notebook' to find items matching both words, \
+                 or set name=true to search only in item names. \
+                 The tool searches the directory that was specified when the MCP server was started."
                     .to_string(),
             ),
             capabilities: ServerCapabilities::builder().enable_tools().build(),
