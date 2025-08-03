@@ -41,7 +41,9 @@ impl McpServer {
 
 #[tool(tool_box)]
 impl McpServer {
-    #[tool(description = "Search for items in the inventory by keywords. Surface Saver helps catalog the inevitable accumulation of items on horizontal surfaces (desks, counters, shelves) into searchable JSON inventories. You can search by keywords across all fields or target specific fields like name, description, categories, or notes. Multiple keywords use AND logic - all must match. Examples: search for 'notebook' to find all notebooks, use name=true to search only item names, or combine keywords like 'arduino sensor' to find items matching both terms.")]
+    #[tool(
+        description = "Search for items in the inventory by keywords. Surface Saver helps catalog the inevitable accumulation of items on horizontal surfaces (desks, counters, shelves) into searchable JSON inventories. You can search by keywords across all fields or target specific fields like name, description, categories, or notes. Multiple keywords use AND logic - all must match. Examples: search for 'notebook' to find all notebooks, use name=true to search only item names, or combine keywords like 'arduino sensor' to find items matching both terms."
+    )]
     async fn search(&self, #[tool(aggr)] request: SearchRequest) -> String {
         tracing::info!("Search request: {:?}", request);
 
