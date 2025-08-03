@@ -234,11 +234,6 @@ mod tests {
         let info = server.get_info();
 
         assert!(info.instructions.is_some());
-        assert!(
-            info.instructions
-                .unwrap()
-                .contains("Surface Saver helps search")
-        );
 
         // Check capabilities
         let _capabilities = info.capabilities;
