@@ -120,17 +120,19 @@ After running, each subdirectory will have an `all.json` file containing all ite
 
 ### MCP Server
 
-Surface Saver includes support for the Model Context Protocol (MCP), allowing AI assistants to search your inventory.
+Surface Saver includes support for the Model Context Protocol (MCP), allowing AI assistants to search and update your inventory.
 
 ```bash
 surface-saver-rust mcp <directory>
 ```
 
 The MCP server:
-- Start a server that AI assistants can connect to via stdio
-- Expose a single `search` tool that allows searching the specified directory
-- Provide the same search capabilities as the command-line search command
-- Restrict access to only the specified directory for security
+- Starts a server that AI assistants can connect to via stdio
+- Exposes two tools:
+  - `search` - Search for items by keywords with the same capabilities as the command-line search
+  - `submit` - Add new items to the inventory by creating timestamped JSON files (e.g., 2025-07-29-08-30-22.json)
+- Restricts access to only the specified directory for security
+- All submitted items are validated to ensure they have required fields (name, description)
 
 ## JSON Schema
 
